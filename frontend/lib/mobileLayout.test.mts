@@ -67,7 +67,7 @@ for (const [name, w] of DIAGRAMS) {
 }
 
 // Region cards: the state name has the card's width, not cut beside the stars.
-const home = read('app/page.tsx');
+const home = read('app/(home)/page.tsx');
 const cardSrc = home.slice(home.indexOf('data-region-card'), home.indexOf('</Link>', home.indexOf('data-region-card')));
 check('the homepage region card does not truncate the name', cardSrc.includes('break-words') && !cardSrc.includes('truncate'));
 

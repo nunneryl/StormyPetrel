@@ -252,7 +252,7 @@ const files = ['app', 'components'].flatMap((d) => walk(join(FRONTEND, d)))
   .map((abs) => abs.slice(FRONTEND.length + 1))
   .filter((rel) => /\.tsx?$/.test(rel) && !/\.test\.[cm]?tsx?$/.test(rel));
 const printing = files.map((rel) => ({ rel, t: tally(rel, read(rel)) })).filter((f) => f.t.heights > 0);
-const MUST_PRINT = ['app/page.tsx', 'components/CamsBrowser.tsx', 'components/CurrentConditions.tsx',
+const MUST_PRINT = ['app/(home)/page.tsx', 'components/CamsBrowser.tsx', 'components/CurrentConditions.tsx',
   'components/HeroSearch.tsx', 'components/RegionList.tsx', 'components/SpotMap.tsx'];
 check('the scan reaches every surface that prints a height: home, cams, spot page, search, region, map',
   MUST_PRINT.every((f) => printing.some((p) => p.rel === f)),
@@ -400,7 +400,7 @@ for (const [rel, use] of [
   ['components/SwellChart.tsx', '{HEADLINE_HEIGHT_LABEL} is a single best estimate'],
   ['app/spot/[slug]/page.tsx', '<ChartCard title={`${HEADLINE_HEIGHT_LABEL} (ft) · next 48h`}>'],
   ['components/ForecastGrid.tsx', '<div className="text-right">{HEADLINE_HEIGHT_COLUMN}</div>'],
-  ['app/page.tsx', '<div className="text-right">{HEADLINE_HEIGHT_COLUMN}</div>'],
+  ['app/(home)/page.tsx', '<div className="text-right">{HEADLINE_HEIGHT_COLUMN}</div>'],
 ] as const) {
   check(`${rel} names the headline height with the constant: ${use}`, read(rel).includes(use));
 }

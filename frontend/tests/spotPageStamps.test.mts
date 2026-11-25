@@ -37,8 +37,14 @@
  *      shown as "Stamp Test Sea Cliff" in its heading, title and region list, at its unchanged
  *      slug; its YouTube cam is in the cam block, which a phone places after the forecast block;
  *      the forecast table is the phone's scroll box; /map's container is dvh tall; and the
- *      not-found page says "Page not found" with a spot search (a missing spot at status 200,
- *      streamed under loading.tsx and marked noindex; a path matching no route at 404).
+ *      not-found page says "Page not found" with a spot search.
+ *  26. Pre-launch: this non-production build renders no analytics tag, and /map's Leaflet and
+ *      marker-cluster styles are the site's own stylesheets, nothing from unpkg.
+ *  25. A real 404 for a missing spot, and a page for a new one. /spot/<no such slug> answers 404
+ *      with the not-found page and its search in the HTML (no loading boundary streams the status
+ *      out first: app/spot/[slug] has no loading.tsx, and the homepage's skeleton is scoped to
+ *      the (home) route group). A spot added after the build (in no list the build read) answers
+ *      200 with its own page on the first request, and again on the next.
  *  11. The Nearest buoy box (lib/buoyDisplay): Pensacola Beach's buoy, 41.0 km away with a reading
  *      an hour old, reads "NDBC 42012 · 41 km away" with the reading; Sunset Point's, 380.99 km
  *      away, reads "No buoy within 150 km (nearest: NDBC 46221, 381 km)" with the station link
@@ -421,6 +427,10 @@ const SEA_CLIFF_CAM = {
   attribution: 'Test Cams', attribution_url: 'https://example.com/cam', display_mode: 'embed', status: 'active',
   last_resolved_at: null, last_checked_at: null,
 };
+// 25: a spot added to the roster after the build: the build's list never names it, so it has no
+// page until someone asks for it; a lookup by its slug finds it.
+const LATE_ARRIVAL = { ...SPOT_FIELDS, id: 990028, slug: 'stamp-test-late-arrival',
+  name: 'Stamp Test Late Arrival', lat: 36.95, lng: -122.02 };
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK,
@@ -473,6 +483,7 @@ const ROWS = new Map<number, Record<string, unknown>[]>([
   [CALIBRATED.id, hours(-12, 48).map((h) => ({ ...row(CALIBRATED.id, h), face_ft_raw: heightAt(h) * 1.25 }))],
   [MOP_TIER.id, hours(-12, 48).map((h) => row(MOP_TIER.id, h))],
   [SEA_CLIFF.id, hours(-12, 48).map((h) => row(SEA_CLIFF.id, h))],
+  [LATE_ARRIVAL.id, hours(-12, 48).map((h) => row(LATE_ARRIVAL.id, h))],
   // 20: a rated spot (the fixture's 3 stars) and a FLAT one; the two no-data spots have no rows.
   [RATED_OR.id, hours(-12, 48).map((h) => row(RATED_OR.id, h))],
   [FLAT_OR.id, hours(-12, 48).map((h) => ({ ...row(FLAT_OR.id, h), stars: 0 }))],
@@ -543,7 +554,7 @@ function answer(table: string, q: URLSearchParams): unknown[] {
   }
   if (table === 'spots') {
     const slug = q.get('slug');
-    if (slug !== null) return SPOTS.filter((s) => slug === `eq.${s.slug}`);
+    if (slug !== null) return [...SPOTS, LATE_ARRIVAL].filter((s) => slug === `eq.${s.slug}`);
     return (q.get('offset') ?? '0') === '0' ? SPOTS : [];
   }
   if (table === 'accuracy_daily') {
@@ -567,7 +578,7 @@ function answer(table: string, q: URLSearchParams): unknown[] {
       }
       return all.sort((a, b) => Date.parse(String(a.valid_time)) - Date.parse(String(b.valid_time)));
     }
-    const spot = SPOTS.find((s) => id === `eq.${s.id}`);
+    const spot = [...SPOTS, LATE_ARRIVAL].find((s) => id === `eq.${s.id}`);
     return spot ? ROWS.get(spot.id) ?? [] : [];
   }
   return [];
@@ -940,16 +951,30 @@ async function main(): Promise<void> {
     check('/region/california lists it under its shown name', ca.includes('>Stamp Test Sea Cliff<') && !ca.includes('Sea Cliff, California'));
     const mapHtml = await (await fetch(`${site}/map`)).text();
     check('/map is dvh tall', mapHtml.includes('supports-[height:100dvh]:h-[calc(100dvh-3.5rem)]'));
-    // A MISSING SPOT ANSWERS 200, NOT 404, and did before this item: /spot/[slug] streams under a
-    // loading.tsx boundary, so the status is sent before notFound() runs. Next marks the page
-    // noindex instead. Held here as it is, so a change either way is seen.
+    // 25: a missing spot is a real 404 (was a noindexed 200 while a loading.tsx streamed it).
     const nf = await fetch(`${site}/spot/no-such-spot-anywhere`);
     const nfHtml = await nf.text();
-    // Streamed, so the not-found content is in the React payload, drawn after load, not plain HTML.
-    check('a missing spot shows "Page not found", with a spot search',
-      nfHtml.includes('Page not found') && nfHtml.includes('data-404-search'));
+    eq('a missing spot answers 404', nf.status, 404);
+    check('...with "Page not found" and a spot search', nfHtml.includes('Page not found') && nfHtml.includes('data-404-search'));
     check('...noindex', nfHtml.includes('<meta name="robots" content="noindex"/>'));
-    eq('...at status 200 (streamed under loading.tsx; known, see the PR)', nf.status, 200);
+    for (const attempt of ['first', 'second']) {
+      const late = await fetch(`${site}/spot/${LATE_ARRIVAL.slug}`);
+      const lateHtml = (await late.text()).replace(/<!-- -->/g, '');
+      eq(`a spot added after the build answers 200 on the ${attempt} request`, late.status, 200);
+      check(`...with its own page (${attempt})`, /<h1[^>]*>Stamp Test Late Arrival<\/h1>/.test(lateHtml)
+        && !lateHtml.includes('<meta name="robots" content="noindex"/>'), (lateHtml.match(/<h1[^>]*>.{0,80}/) ?? [lateHtml.slice(0, 300)])[0]);
+    }
+    // 26: the build is not production (VERCEL_ENV unset), so no page carries the analytics tag;
+    // and /map's Leaflet and marker-cluster styles come from the site's own stylesheets.
+    check('a non-production build carries no analytics tag', !mapHtml.includes('googletagmanager.com')
+      && !mapHtml.includes('G-S7Y5BXQ125') && !html.includes('googletagmanager.com'));
+    check('/map loads nothing from unpkg', !mapHtml.includes('unpkg.com'));
+    const cssHrefs = [...mapHtml.matchAll(/<link rel="stylesheet" href="([^"]+\.css)"/g)].map((m) => m[1]);
+    const css = (await Promise.all(cssHrefs.map(async (h) => (await fetch(new URL(h, site))).text()))).join('\n');
+    check('/map links its stylesheets from the site itself', cssHrefs.length > 0 && cssHrefs.every((h) => h.startsWith('/_next/')),
+      cssHrefs.join(' '));
+    check('...which carry Leaflet\'s and the marker clusters\' styles', css.includes('.leaflet-container')
+      && css.includes('.marker-cluster-small'));
     const nf2 = await fetch(`${site}/no-such-page-anywhere`);
     eq('a path that matches no route answers 404', nf2.status, 404);
     check('...with the same page and search', (await nf2.text()).includes('data-404-search'));

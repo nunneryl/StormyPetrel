@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { basemap } from '@/lib/basemap';
+// Leaflet's stylesheets, bundled with the page rather than fetched from a CDN at run time.
+import 'leaflet/dist/leaflet.css';
 
 // Interactive "what's the angle?" map. The preset spots + their
 // geometry come in as a prop from the server component on the
@@ -22,7 +24,6 @@ export type SwellPreset = {
   windowArcs: Array<{ min: number; max: number }>;
 };
 
-const LEAFLET_CSS_ID = 'leaflet-css';
 const RADIUS_KM = 8;
 
 // --- pure math ---------------------------------------------------------
@@ -134,16 +135,6 @@ function cardinal16(deg: number | null | undefined): string {
 
 // --- component ---------------------------------------------------------
 
-function ensureCss(id: string, href: string) {
-  if (typeof document === 'undefined' || document.getElementById(id)) return;
-  const link = document.createElement('link');
-  link.id = id;
-  link.rel = 'stylesheet';
-  link.href = href;
-  link.crossOrigin = '';
-  document.head.appendChild(link);
-}
-
 function defaultSwellDir(p: SwellPreset): number {
   // optimal_swell_dir from the spots table is the primary signal —
   // it's the recorded best-case angle for the break. When it isn't
@@ -215,7 +206,6 @@ export function SwellDirectionMap({ presets }: { presets: SwellPreset[] }) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const L: any = (leafletNs as any).default ?? leafletNs;
       LRef.current = L;
-      ensureCss(LEAFLET_CSS_ID, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
       if (cancelled || !containerRef.current) return;
 
       const map = L.map(containerRef.current, {
