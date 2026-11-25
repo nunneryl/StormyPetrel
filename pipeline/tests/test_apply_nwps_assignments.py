@@ -722,7 +722,19 @@ _R82 = {"brookings-beach": ((42.02959, -124.29412), 2.547, (42.02959, -124.27026
          "table-tops-aguadilla": ((18.46106, -67.20339), 5.710, (18.42859, -67.16949)),
          "gas-chambers-aguadilla": ((18.46106, -67.20339), 3.832, (18.46106, -67.16949)),
          "crash-boat-beach": ((18.46106, -67.20339), 4.201, (18.46106, -67.16949))}
-_MOVES = {**_RUN50, **_RUN58, **_RUN67, **_V15, **_R82}
+# Five of the six neighbours #353 left out of its bar (their own points within 400 m of shore or on
+# land), by the same rule on the 2026-11-24 cycles, kept after node-preview run 83 (Surfers Beach
+# Aguadilla held: its own point already read 1.07 of buoy 41121).
+_R83 = {"dogmans-rincon": ((18.34742, -67.30508), 5.066, (18.33119, -67.25424)),
+         "fort-fisher": ((33.96568, -77.88904), 2.617, (33.96568, -77.91575)),
+         "wrightsville-beach": ((34.19117, -77.75548), 3.828, (34.21372, -77.78219)),
+         "north-pea-island": ((35.7701, -75.49398), 2.087, (35.7701, -75.51355)),
+         "bath-house": ((36.03045, -75.63102), 2.728, (36.01418, -75.6506)),
+         # and the two New Jersey cells blank at low tide (no surf height 26 Nov 06-08Z), on the
+         # 2026-11-24/25 phi cycles, each wet every hour of all four read
+         "long-beach-township": ((39.59458, -74.17759), 2.838, (39.61079, -74.19828)),
+         "sea-bright": ((40.35673, -73.95), 1.756, (40.35447, -73.96429))}
+_MOVES = {**_RUN50, **_RUN58, **_RUN67, **_V15, **_R82, **_R83}
 
 
 def test_live_overrides_are_run_50s_58s_and_67s_cells():
@@ -770,7 +782,7 @@ def test_live_roster_carries_the_moved_nodes_and_the_assignments_the_old_ones():
 
 def test_live_rebake_writes_what_the_roster_already_holds():
     # A re-bake from the files on disk must be a no-op on spots_enriched.json: every placed
-    # spot's node fields, the thirty-three moved included, already read what apply would write.
+    # spot's node fields, the forty moved included, already read what apply would write.
     enriched = _real_enriched()
     by_slug = {ap._slug(s["name"]): s for s in enriched}
     rows, problems, held, *_ = ap.build_plan()
