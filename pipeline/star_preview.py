@@ -57,6 +57,11 @@ tide_preference_source in the live spots table is not one of config.TIDE_RATED_S
                 the row's tide_norm, interpret.rated_tide_preference(the spot in
                 --tide-roster)). With every source unverified it must equal neutral hour for
                 hour — the check that the rating now publishes what neutral previewed.
+    times       each hour of a spot whose preference the rating applies, rated on the tide at
+                its own time: tide_norm is the stored tide_norm of the hour (true local offset
+                in the spot's time_zone - round(lng / 15)) away, the tide the UTC fetch gives
+                that hour (forecast/tides.py), and tide_mult the rater's rule on it. Hours by
+                shift, hours retimed and the spots retimed are reported with the star change.
 
     python -m pipeline.star_preview --tide neutral,rated [--baseline B.json]
         [--tide-roster R.json] [--out OUT.json]
@@ -2074,7 +2079,7 @@ def tide_mode(spec):
         if not 0.0 < k < 1.0:
             raise ValueError(f"{spec}: K must be strictly between 0 and 1")
         return spec, lambda tm: 1.0 - k * (1.0 - tm)
-    raise ValueError(f"unknown tide mode {spec!r}: keep, neutral, damp:K or rated")
+    raise ValueError(f"unknown tide mode {spec!r}: keep, neutral, damp:K, rated or times")
 
 
 def unverified(tide):
@@ -2106,6 +2111,67 @@ def rated_row_after(roster, names):
             return row
         return dict(row, tide_mult=tide_multiplier(_num(row.get("tide_norm")),
                                                    rated_tide_preference(spot)))
+    return after
+
+
+def tide_time_shift_hours(spot, valid_time):
+    """Hours between the tide the pipeline rated a published hour on and the tide at that hour.
+
+    Before the tide times were UTC (forecast/tides.py TIDE_TIME_ZONE), the station's predictions
+    came in its local clock, daylight saving included (CO-OPS lst_ldt), and interpret read them
+    at the forecast hour plus round(lng / 15) hours, a standard-time offset guessed from
+    longitude. So a published hour v carries the tide of v + (L - T), where L = round(lng / 15)
+    and T is the local offset at v in the spot's own zone (spots_enriched.json time_zone): the
+    tide at v is the stored tide of the hour v + (T - L). Returns T - L in whole hours (0 where
+    the guess was right), or None when the spot has no zone or no longitude."""
+    from zoneinfo import ZoneInfo
+    tz, lng = spot.get("time_zone"), spot.get("lng")
+    if not tz or lng is None:
+        return None
+    when = datetime.fromisoformat(str(valid_time).replace("Z", "+00:00"))
+    true_h = when.astimezone(ZoneInfo(tz)).utcoffset().total_seconds() / 3600.0
+    return int(round(true_h - round(float(lng) / 15.0)))
+
+
+def times_row_after(roster, names, rows, summary):
+    """The AFTER row for the 'times' mode: each hour of a spot whose tide preference the rating
+    applies, rated on the tide at its own time. Its tide_norm is the stored tide_norm of the hour
+    tide_time_shift_hours away (the same run's series, as every hour of a run is written from one
+    tide series), and tide_mult the rater's rule on it. An hour whose neighbour is not in the
+    window keeps its row and is counted. Every other spot's row is unchanged, so a change can only
+    come from a spot with a rated preference. *summary* collects the counts."""
+    by_hour = {}
+    for r in rows:
+        t = datetime.fromisoformat(str(r["valid_time"]).replace("Z", "+00:00"))
+        by_hour[(r["spot_id"], int(t.timestamp() // 3600))] = r
+    shifts, missing, retimed, spots_retimed = Counter(), 0, 0, set()
+
+    def after(row):
+        nonlocal missing, retimed
+        name = names.get(row["spot_id"], (None, None))[0]
+        spot = roster.get(name)
+        pref = rated_tide_preference(spot) if spot else None
+        if spot is None or pref is None:
+            return row
+        shift = tide_time_shift_hours(spot, row["valid_time"])
+        shifts[shift] += 1
+        if not shift:
+            return row
+        t = datetime.fromisoformat(str(row["valid_time"]).replace("Z", "+00:00"))
+        other = by_hour.get((row["spot_id"], int(t.timestamp() // 3600) + shift))
+        if other is None or other.get("tide_norm") is None:
+            missing += 1
+            return row
+        retimed += 1
+        spots_retimed.add(name)
+        norm = _num(other.get("tide_norm"))
+        return dict(row, tide_norm=norm, tide_mult=tide_multiplier(norm, pref))
+
+    def done():
+        summary.update({"hours_by_shift": {str(k): v for k, v in sorted(shifts.items(), key=lambda kv: str(kv[0]))},
+                        "hours_retimed": retimed, "hours_without_the_neighbour": missing,
+                        "spots_retimed": sorted(spots_retimed)})
+    after.done = done
     return after
 
 
@@ -2542,7 +2608,7 @@ def main(argv=None):
         p.error("give --arcs (a swell-window preview), --tide (a tide preview), or both; "
                 "or --nwps-shelter, --rating, --variants, --wind or --onshore")
     specs = [m.strip() for m in args.tide.split(",")] if args.tide else []
-    modes = [(m, None) if m == "rated" else tide_mode(m) for m in specs]
+    modes = [(m, None) if m in ("rated", "times") else tide_mode(m) for m in specs]
     from supabase import create_client
     client = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
     since = args.since or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -2670,6 +2736,23 @@ def main(argv=None):
         out["tide"] = {}
         roster = _by_name(args.tide_roster) if args.tide_roster else before
         for label, f in modes:
+            if label == "times":
+                print(f"\n=== tide: times — each hour rated on the tide at its own time, UTC "
+                      f"(forecast/tides.py), not the local clock read at a longitude offset "
+                      f"({sum(rated_tide_preference(s) is not None for s in roster.values())} "
+                      f"spots whose preference the rating applies) ===")
+                times_summary = {}
+                row_after = times_row_after(roster, names, rows, times_summary)
+                rep = compare(rows, before, after, names, row_after=row_after)
+                row_after.done()
+                rep["times"] = times_summary
+                _print(rep, since)
+                print(f"times: hours by shift {times_summary['hours_by_shift']}; retimed "
+                      f"{times_summary['hours_retimed']}, without the neighbour hour "
+                      f"{times_summary['hours_without_the_neighbour']}; spots retimed "
+                      f"{len(times_summary['spots_retimed'])}: {', '.join(times_summary['spots_retimed'])}")
+                out["tide"][label] = rep
+                continue
             if label == "rated":
                 print(f"\n=== tide: rated — the rater's rule on the sources in "
                       f"{args.tide_roster or args.baseline} "

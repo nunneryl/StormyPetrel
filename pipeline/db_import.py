@@ -45,6 +45,7 @@ from .config import (
     NWPS_READS_FILE,
     RATINGS_FILE,
     TIDES_FORECAST_FILE,
+    TIDE_TIME_ZONE,
 )
 
 log = logging.getLogger("pipeline.db_import")
@@ -956,12 +957,10 @@ def import_buoys(client, buoys_path: Path = BUOYS_FORECAST_FILE,
 # ---------------------------------------------------------------------------
 
 def _parse_coops_time(t_str: str) -> str | None:
-    """CO-OPS hilo/hourly times are 'YYYY-MM-DD HH:MM' in LST/LDT (no tz).
-
-    We store them as TIMESTAMPTZ cast as UTC for schema simplicity — the
-    interpret pipeline already treats CO-OPS timestamps as local, so this
-    keeps the database consistent with how the data is consumed. Document
-    in the schema comment.
+    """A CO-OPS hilo/hourly time, 'YYYY-MM-DD HH:MM', as an ISO UTC timestamp. forecast/tides.py
+    fetches in UTC (config.TIDE_TIME_ZONE = "gmt"), so the clock time is UTC and is stored as such.
+    (Rows written before 2026-11-25 hold the station's local clock cast as UTC, as migration 001's
+    comment says; nothing reads the table, and --tides-only is by hand.)
     """
     try:
         dt = datetime.strptime(t_str, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
@@ -980,6 +979,9 @@ def import_tides(client, tides_path: Path = TIDES_FORECAST_FILE,
     seen: set[tuple[str, str]] = set()  # de-dupe within a station
 
     for station_id, data in tides.items():
+        if data.get("time_zone") != TIDE_TIME_ZONE:
+            log.warning("tide_predictions: %s has no UTC marker; not written", station_id)
+            continue
         for series_key in ("hilo", "hourly"):
             for entry in data.get(series_key) or []:
                 t_str = entry.get("t")

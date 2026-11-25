@@ -62,6 +62,8 @@ class _Sandbox:
         return self
 
     def write_cache(self, station_id: str, entry: dict) -> None:
+        # a cache written by this code carries the UTC marker (forecast/tides.py TIDE_TIME_ZONE)
+        entry = {"time_zone": T.TIDE_TIME_ZONE, **entry}
         (T.TIDES_CACHE_DIR / f"{station_id}.json").write_text(json.dumps(entry))
 
     def __exit__(self, *exc):
@@ -163,6 +165,7 @@ def test_an_expired_cache_is_NOT_re_adopted():
     }
     assert T._stale_entry("TWC0965F", cache, WIN_START, WIN_END) == {
         "station_id": "TWC0965F",
+        "time_zone": "gmt",
         "fetched_at": None,
         "asof": None,
         "stale": True,
@@ -222,7 +225,7 @@ def test_no_cache_at_all_is_the_same_no_data_state():
     """Absent and expired must be indistinguishable downstream — both are "no tides for these
     dates". A separate shape for each would give db_import two things to handle for one fact."""
     assert T._stale_entry("9999999", None, WIN_START, WIN_END) == {
-        "station_id": "9999999", "fetched_at": None, "asof": None,
+        "station_id": "9999999", "time_zone": "gmt", "fetched_at": None, "asof": None,
         "stale": True, "hilo": [], "hourly": [],
     }
     assert T._stale_entry("9999999", {}, WIN_START, WIN_END)["asof"] is None
@@ -398,7 +401,7 @@ def test_every_path_is_counted_and_the_buckets_sum_to_the_station_total():
     assert seen_skip_hourly == {"S_LIVE": False, "S_HILO_FAIL": True, "S_NOPRED": False}, \
         seen_skip_hourly
     # The failed hilo-only station is NOT served its lapsed cache.
-    assert out["S_HILO_FAIL"] == {"station_id": "S_HILO_FAIL", "fetched_at": None, "asof": None,
+    assert out["S_HILO_FAIL"] == {"station_id": "S_HILO_FAIL", "time_zone": "gmt", "fetched_at": None, "asof": None,
                                   "stale": True, "hilo": [], "hourly": []}, out["S_HILO_FAIL"]
 
 
