@@ -253,7 +253,7 @@ BUOYS = {"46042": {"latest": {"time": "2026-09-24T11:00:00Z", "wave_height_m": 1
                               "wind_speed_ms": 4.0, "wind_dir_deg": 320.0, "water_temp_c": 14.2},
                    "spec_history_24h": [{"time": "2026-09-24T11:00:00Z", "swell_height_m": 1.3,
                                          "swell_period_s": 13.0, "swell_dir_deg": 285.0}]}}
-TIDES = {"9413745": {"hilo": [{"t": "2026-09-24 03:12", "v": "4.1", "type": "H"}],
+TIDES = {"9413745": {"time_zone": "gmt", "hilo": [{"t": "2026-09-24 03:12", "v": "4.1", "type": "H"}],
                      "hourly": [{"t": "2026-09-24 04:00", "v": "3.9"}]}}
 SNAPSHOT = {"46042": {"lat": 36.785, "lng": -122.398, "name": "Monterey"}}
 

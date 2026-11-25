@@ -63,6 +63,7 @@ from .config import (
     RATINGS_FILE,
     TIDES_FORECAST_FILE,
     TIDE_RATED_SOURCES,
+    TIDE_TIME_ZONE,
     WW3_FORECAST_FILE,
 )
 
@@ -1002,13 +1003,10 @@ def composite_stars(
 # Tide lookup
 # ---------------------------------------------------------------------------
 
-def _tz_offset_hours(lng: float) -> int:
-    """Rough standard-time offset from longitude (≈15°/hour)."""
-    return round(lng / 15.0)
-
-
 def _parse_coops_time(t: str) -> datetime | None:
-    """CO-OPS hourly/hilo `t` strings are 'YYYY-MM-DD HH:MM' in LST/LDT."""
+    """A CO-OPS hourly/hilo `t`, 'YYYY-MM-DD HH:MM', as a naive UTC datetime: forecast/tides.py
+    asks for time_zone=gmt (TIDE_TIME_ZONE), so the clock time IS UTC and compares directly with
+    the forecast hour. No local offset is applied anywhere."""
     try:
         return datetime.strptime(t, "%Y-%m-%d %H:%M")
     except (ValueError, TypeError):
@@ -1067,7 +1065,16 @@ def build_tide_series(station_block: dict) -> dict | None:
 
     Returns {"min", "max", "points": [(dt, v)], "source": "hourly"|"hilo"}
     or None when neither source has parseable predictions.
+
+    THE POINTS ARE UTC. A station block without forecast/tides.py's time_zone marker ("gmt") was
+    fetched in the station's local clock, and reading it as UTC would shift the tide by the
+    station's offset: it is refused (None, as a station with no predictions), never guessed at.
     """
+    if station_block.get("time_zone") != TIDE_TIME_ZONE:
+        if station_block.get("hourly") or station_block.get("hilo"):
+            log.warning("tides: station %s has predictions but no UTC marker (time_zone=%r); not used",
+                        station_block.get("station_id"), station_block.get("time_zone"))
+        return None
     for source in ("hourly", "hilo"):
         rows = station_block.get(source) or []
         points: list[tuple[datetime, float]] = []
@@ -1098,21 +1105,22 @@ def build_tide_series(station_block: dict) -> dict | None:
 def lookup_tide_norm(
     series: dict,
     valid_time_utc: datetime,
-    lng: float,
 ) -> tuple[float | None, float | None]:
-    """Return (raw_tide_ft, tide_norm in 0-1) for *valid_time_utc*."""
+    """Return (raw_tide_ft, tide_norm in 0-1) for *valid_time_utc*. The series' points are UTC
+    (build_tide_series), so the hour is looked up as it is: no local offset."""
     min_v = series["min"]
     max_v = series["max"]
     if max_v - min_v < 1e-9:
         return None, None
 
-    local = valid_time_utc + timedelta(hours=_tz_offset_hours(lng))
-    local_naive = local.replace(tzinfo=None)
+    if valid_time_utc.tzinfo is not None:
+        valid_time_utc = valid_time_utc.astimezone(timezone.utc)
+    utc_naive = valid_time_utc.replace(tzinfo=None)
 
     # Hilo points are ~6h apart — a hourly forecast will always be strictly
     # bracketed, so allow a 6h gap on the endpoints. Hourly stays tight.
     max_gap_h = 6.0 if series["source"] == "hilo" else 3.0
-    v = _sample_points(series["points"], local_naive, max_gap_h)
+    v = _sample_points(series["points"], utc_naive, max_gap_h)
     if v is None:
         return None, None
     norm = (v - min_v) / (max_v - min_v)
@@ -1540,7 +1548,6 @@ def rate_spot(
     # same open coast. The series still feeds tide_norm, so tide_mult and the star rating are
     # unaffected; only tide_level_ft is withheld. See the row write below.
     suppress_tide_height = bool(spot.get("tide_height_suppressed"))
-    lng = float(spot.get("lng") or 0.0)
     buoy_swell_dp = buoy_swell["swell_dp"] if buoy_swell else None
     buoy_swell_tp = buoy_swell["swell_tp"] if buoy_swell else None
     ww3_idx = _ww3_index(ww3_series)
@@ -1682,7 +1689,7 @@ def rate_spot(
         )
 
         tide_raw, tide_norm = (
-            lookup_tide_norm(tide_series, vt, lng) if tide_series else (None, None)
+            lookup_tide_norm(tide_series, vt) if tide_series else (None, None)
         )
         tm = tide_multiplier(tide_norm, preference)
 

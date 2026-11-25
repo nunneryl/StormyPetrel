@@ -562,6 +562,9 @@ def bottom_fields(value: str | None, source: str | None, url: str | None = None,
 # Forecast fetching (Phase 1)
 # ---------------------------------------------------------------------------
 NOAA_COOPS_ENDPOINT = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+# CO-OPS predictions are fetched in UTC (time_zone=gmt) and compared with the UTC forecast hour as
+# they are: no local offset anywhere (forecast/tides.py, interpret.build_tide_series).
+TIDE_TIME_ZONE = "gmt"
 NOAA_COOPS_MIN_INTERVAL_S = 1.0  # polite pace for the public CO-OPS API
 # Datum cascade: many subordinate and regional stations only publish one of
 # these; try them in order and take the first that returns predictions.

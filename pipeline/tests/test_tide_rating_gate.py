@@ -10,8 +10,9 @@ The free tide pass then gave 126 spots a researched preference; run 16 (2026-10-
 them: 1,011 of 85,913 spot-hours (1.2%) at 67 spots half a star lower, none higher.
 
 Every expected value is worked by hand:
-  the tide series has min 1.0 ft and max 5.0 ft, and one point at 11:00 local — 18:00Z at
-  lng -123.8 — so the hour's tide_norm is (4.6 - 1.0) / (5.0 - 1.0) = 0.9.
+  the tide series has min 1.0 ft and max 5.0 ft, and one point at 18:00Z, the hour rated (the
+  series' times are UTC, as forecast/tides.py fetches them), so the hour's tide_norm is
+  (4.6 - 1.0) / (5.0 - 1.0) = 0.9.
   low  at 0.9: not < 0.3, not < 0.7          -> 0.6
   mid  at 0.9: outside [0.3, 0.7]            -> 0.7
   high at 0.9: > 0.7                         -> 1.0
@@ -30,7 +31,7 @@ from pipeline import config, descriptions, interpret
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 SERIES = {"min": 1.0, "max": 5.0, "source": "hourly",
-          "points": [(datetime(2026, 9, 9, 11, 0), 4.6)]}
+          "points": [(datetime(2026, 9, 9, 18, 0), 4.6)]}
 FORECAST = [{"valid_time": "2026-09-09T18:00:00Z", "hs": 1.5, "tp": 12.0, "dp": 280.0,
              "wind_speed": 2.0, "wind_dir": 90.0, "swell_hs": 1.5,
              "swell_tp": 12.0, "swell_dp": 280.0}]

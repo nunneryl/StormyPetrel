@@ -167,7 +167,7 @@ from datetime import datetime  # noqa: E402
 
 _TIDE_SERIES = {
     "min": 1.0, "max": 5.0, "source": "hourly",
-    "points": [(datetime(2026, 9, 9, 11, 0), 3.0)],   # 18:00Z at lng -123.8 is 11:00 local
+    "points": [(datetime(2026, 9, 9, 18, 0), 3.0)],   # 18:00Z: the series' times are UTC
 }
 
 

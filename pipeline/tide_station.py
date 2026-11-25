@@ -76,12 +76,12 @@ def mean_range(hilo):
 
 def request(session, station, interval, datum, begin, hours=PROBE_HOURS, pace_s=1.0):
     """The pipeline's predictions request for one station, interval and datum: (classified, body)."""
-    from .config import NOAA_COOPS_ENDPOINT
+    from .config import NOAA_COOPS_ENDPOINT, TIDE_TIME_ZONE
     time.sleep(pace_s)
     try:
         r = session.get(NOAA_COOPS_ENDPOINT, timeout=30, params={
             "station": station, "product": "predictions", "datum": datum, "units": "english",
-            "time_zone": "lst_ldt", "interval": interval, "begin_date": begin, "range": hours,
+            "time_zone": TIDE_TIME_ZONE, "interval": interval, "begin_date": begin, "range": hours,
             "format": "json"})
     except Exception as e:                                      # noqa: BLE001 - reported
         return {"result": "transport", "message": f"{type(e).__name__}: {e}"[:200]}, None

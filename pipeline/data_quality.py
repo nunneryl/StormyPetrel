@@ -872,10 +872,10 @@ def damped(assigned_range, nearby):
 
 
 def _hilo(session, station, begin, hours=72):
-    from .config import NOAA_COOPS_ENDPOINT
+    from .config import NOAA_COOPS_ENDPOINT, TIDE_TIME_ZONE
     r = session.get(NOAA_COOPS_ENDPOINT, timeout=30, params={
         "station": station, "product": "predictions", "datum": "MLLW", "units": "english",
-        "time_zone": "lst_ldt", "interval": "hilo", "begin_date": begin, "range": hours,
+        "time_zone": TIDE_TIME_ZONE, "interval": "hilo", "begin_date": begin, "range": hours,
         "format": "json"})
     if r.status_code != 200:
         return None
@@ -941,18 +941,18 @@ def tide_preview(rows, spots, names, factors, m, tides, session, now):
     from .interpret import (build_tide_series, lookup_tide_norm, rated_tide_preference,
                             tide_multiplier)
     from .star_preview import _slug, rescore, wired_rater
-    from .config import NOAA_COOPS_ENDPOINT
+    from .config import NOAA_COOPS_ENDPOINT, TIDE_TIME_ZONE
     todo = {r["spot"]: r for r in tides if r["flagged"] and rated_tide_preference(
         spots.get(r["spot"], {}))}
     out = {}
     for name, t in todo.items():
         spot = spots[name]
         begin = (now - timedelta(days=1)).strftime("%Y%m%d")
-        block = {}
+        block = {"station_id": t["proposed"]["station"], "time_zone": TIDE_TIME_ZONE}
         for interval, key in (("h", "hourly"), ("hilo", "hilo")):
             r = session.get(NOAA_COOPS_ENDPOINT, timeout=30, params={
                 "station": t["proposed"]["station"], "product": "predictions", "datum": "MLLW",
-                "units": "english", "time_zone": "lst_ldt", "interval": interval,
+                "units": "english", "time_zone": TIDE_TIME_ZONE, "interval": interval,
                 "begin_date": begin, "range": 24 * 12, "format": "json"})
             block[key] = (r.json().get("predictions") or []) if r.status_code == 200 else []
         series = build_tide_series(block)
@@ -965,8 +965,7 @@ def tide_preview(rows, spots, names, factors, m, tides, session, now):
             f = spot_factor(spot, factors or {}, _slug)
             if rb["stars"] is None or wired_rater(row, spot, rb, f, m) != float(row["stars"]):
                 continue
-            norm = lookup_tide_norm(series, _iso(row["valid_time"]), float(spot["lng"]))[1] \
-                if series else None
+            norm = lookup_tide_norm(series, _iso(row["valid_time"]))[1] if series else None
             new = dict(row, tide_norm=norm, tide_mult=tide_multiplier(norm, pref))
             rb2 = rescore(new, spot)
             after = wired_rater(new, spot, rb2, f, m)

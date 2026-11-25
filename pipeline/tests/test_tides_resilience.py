@@ -107,7 +107,7 @@ def test_warm_cache_serves_through_outage_no_network_not_stale():
         sid = "9410170"
         rows = [{"t": (today + timedelta(days=k)).strftime("%Y-%m-%d 12:00"), "v": f"{2.0 + k:.1f}"}
                 for k in range(30)]
-        (tmp / "cache" / f"{sid}.json").write_text(json.dumps({
+        (tmp / "cache" / f"{sid}.json").write_text(json.dumps({"time_zone": "gmt",
             "station_id": sid, "fetched_at": "2026-07-01T00:00:00+00:00",
             "covers_from": today.isoformat(),
             "covers_until": (today + timedelta(days=30)).isoformat(),   # covers well past the 7-day window

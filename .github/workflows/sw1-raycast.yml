@@ -200,7 +200,7 @@ on:
         default: main
         type: string
       tide_modes:
-        description: "(tide-preview only) comma-separated: keep, neutral, damp:K (0 < K < 1, the share of the penalty kept), rated (the rater's own rule)"
+        description: "(tide-preview only) comma-separated: keep, neutral, damp:K (0 < K < 1, the share of the penalty kept), rated (the rater's own rule), times (each hour on the tide at its own time, UTC)"
         required: false
         default: neutral,damp:0.5
         type: string

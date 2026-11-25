@@ -52,6 +52,7 @@ from ..config import (
     TIDE_KNOWN_BAD_TTL_DAYS,
     TIDE_PREDICTION_RANGE_HOURS,
     TIDE_STAGE_DEADLINE_S,
+    TIDE_TIME_ZONE,
     TIDES_CACHE_DIR,
     TIDES_FORECAST_FILE,
 )
@@ -65,6 +66,16 @@ log = logging.getLogger(__name__)
 _NO_PREDICTIONS_FILE = TIDES_CACHE_DIR / "_no_predictions.json"
 
 _OUTPUT_DAYS = TIDE_PREDICTION_RANGE_HOURS // 24     # 7-day output horizon (unchanged)
+
+# THE TIMES ARE UTC. CO-OPS is asked for time_zone=gmt, so every 't' this module caches and emits
+# is a UTC clock time, and interpret compares it with the UTC forecast hour directly: no local
+# offset anywhere. It used to ask for lst_ldt (the station's local clock, daylight saving
+# included) while interpret converted the forecast hour with a fixed standard-time offset guessed
+# from longitude, so every tide on daylight saving was read an hour off from March to November,
+# and Oahu and Kauai (round(lng / 15) = -11, Hawaii is UTC-10) all year. Each cache entry and each
+# emitted station carries the marker; a cache entry without it was fetched in local time and is
+# not used (the station is fetched again), and interpret refuses an emitted station without it.
+# (config.TIDE_TIME_ZONE)
 
 
 class _TideOutage(Exception):
@@ -196,13 +207,19 @@ def _station_cache_path(station_id: str) -> Path:
 
 
 def _load_cache(station_id: str) -> dict | None:
+    """The station's cached predictions, or None. A cache written before the times were UTC (no
+    `time_zone` marker, or another zone) is in the station's local clock and is NOT used: the
+    station is fetched again, as on a cold start."""
     p = _station_cache_path(station_id)
     if not p.exists():
         return None
     try:
-        return json.loads(p.read_text())
+        entry = json.loads(p.read_text())
     except (json.JSONDecodeError, OSError):
         return None
+    if not isinstance(entry, dict) or entry.get("time_zone") != TIDE_TIME_ZONE:
+        return None
+    return entry
 
 
 def _save_cache(station_id: str, entry: dict) -> None:
@@ -267,6 +284,7 @@ def _emit(station_id: str, entry: dict, start_date: date, end_date: date,
     back-compat; `asof`/`stale` are the honest freshness signal db_import folds into data_sources."""
     return {
         "station_id": station_id,
+        "time_zone": TIDE_TIME_ZONE,
         "fetched_at": asof,
         "asof": asof,
         "stale": stale,
@@ -283,7 +301,7 @@ def _no_data_entry(station_id: str) -> dict:
     `asof: "2026-07-30..."` reads as "we have July's tides, just old"; this one reads as "we
     have no tides for these dates at all", which is what is true. stations_with_no_rows picks it
     up (both series empty) so the station and its spots are NAMED in the run summary."""
-    return {"station_id": station_id, "fetched_at": None, "asof": None,
+    return {"station_id": station_id, "time_zone": TIDE_TIME_ZONE, "fetched_at": None, "asof": None,
             "stale": True, "hilo": [], "hourly": []}
 
 
@@ -403,7 +421,7 @@ def _fetch_interval_once(station_id: str, interval: str, begin_yyyymmdd: str,
             "product": "predictions",
             "datum": datum,
             "units": "english",
-            "time_zone": "lst_ldt",
+            "time_zone": TIDE_TIME_ZONE,
             "interval": interval,
             "begin_date": begin_yyyymmdd,
             "range": horizon_hours,
@@ -827,6 +845,7 @@ def fetch(spots: list[dict], use_cache: bool = True,
             now_iso = datetime.now(tz=timezone.utc).isoformat()
             entry = {
                 "station_id": sid,
+                "time_zone": TIDE_TIME_ZONE,
                 "fetched_at": now_iso,
                 "covers_from": today.isoformat(),
                 "covers_until": covers_until,

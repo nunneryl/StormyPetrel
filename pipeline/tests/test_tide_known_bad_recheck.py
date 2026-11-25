@@ -124,13 +124,13 @@ def _long(calls):
 
 def _hilo_only_lapsed_cache(station):
     """A cache like 8665387's on 2026-10-09: hilo-only, its horizon run out."""
-    return {"station_id": station, "fetched_at": "2026-09-01T00:00:00+00:00",
+    return {"station_id": station, "time_zone": "gmt", "fetched_at": "2026-09-01T00:00:00+00:00",
             "covers_from": "2026-09-01", "covers_until": (date.today() - timedelta(days=1)).isoformat(),
             "hilo_only": True, "hilo": [], "hourly": []}
 
 
-NO_DATA = {"station_id": "8665387", "fetched_at": None, "asof": None, "stale": True,
-           "hilo": [], "hourly": []}
+NO_DATA = {"station_id": "8665387", "time_zone": "gmt", "fetched_at": None, "asof": None,
+           "stale": True, "hilo": [], "hourly": []}
 
 
 # --------------------------------------------------------------------------- #
