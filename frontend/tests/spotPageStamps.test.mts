@@ -45,6 +45,9 @@
  *      out first: app/spot/[slug] has no loading.tsx, and the homepage's skeleton is scoped to
  *      the (home) route group). A spot added after the build (in no list the build read) answers
  *      200 with its own page on the first request, and again on the next.
+ *  27. A spot whose tide station gives timing but not height (the Mendocino four): the chart is
+ *      "Tide times", with the station, its distance and why there are no feet; the Tide tile says
+ *      rising or falling with no feet; a spot with its height keeps "Tide (ft)" and the feet.
  *  11. The Nearest buoy box (lib/buoyDisplay): Pensacola Beach's buoy, 41.0 km away with a reading
  *      an hour old, reads "NDBC 42012 · 41 km away" with the reading; Sunset Point's, 380.99 km
  *      away, reads "No buoy within 150 km (nearest: NDBC 46221, 381 km)" with the station link
@@ -431,10 +434,15 @@ const SEA_CLIFF_CAM = {
 // page until someone asks for it; a lookup by its slug finds it.
 const LATE_ARRIVAL = { ...SPOT_FIELDS, id: 990028, slug: 'stamp-test-late-arrival',
   name: 'Stamp Test Late Arrival', lat: 36.95, lng: -122.02 };
+// 27: a spot whose tide station gives the tide's timing but not its height (spots.tide_height_suppressed),
+// as the four Mendocino spots on Arena Cove: its rows carry tide_norm and no tide_level_ft.
+const TIDE_TIMES = { ...SPOT_FIELDS, id: 990029, slug: 'stamp-test-tide-times', name: 'Stamp Test Tide Times',
+  lat: 39.36, lng: -123.82, nearest_tide_station_id: '9416841', nearest_tide_station_dist_km: 50.5,
+  tide_height_suppressed: true };
 const SOURCE_SPOTS = [PIPELINE, PENSACOLA, SUNSET_POINT, VERIFIED_TIDE, JACKSONVILLE, LAST_WAVE, BACKUP,
   BLANK_HOUR, OLD_RUN];
 const SPOTS = [WITH_ROW, NO_ROW, ...SOURCE_SPOTS, COMPASS, KANAHA, RINCON, LOVERS, DILLON, SHARP_PARK,
-  SCARBOROUGH, HOOKIPA, CALIBRATED, MOP_TIER, RATED_OR, FLAT_OR, NO_DATA_OR, NO_DATA_AK, SEA_CLIFF];
+  SCARBOROUGH, HOOKIPA, CALIBRATED, MOP_TIER, RATED_OR, FLAT_OR, NO_DATA_OR, NO_DATA_AK, SEA_CLIFF, TIDE_TIMES];
 
 // The Surf height tile shows the reading range, the standard step the height falls in
 // (lib/formatting.ts fmtHeightRange), so the heights cycle through five 1 ft steps: 1.5, 2.5,
@@ -484,6 +492,9 @@ const ROWS = new Map<number, Record<string, unknown>[]>([
   [MOP_TIER.id, hours(-12, 48).map((h) => row(MOP_TIER.id, h))],
   [SEA_CLIFF.id, hours(-12, 48).map((h) => row(SEA_CLIFF.id, h))],
   [LATE_ARRIVAL.id, hours(-12, 48).map((h) => row(LATE_ARRIVAL.id, h))],
+  // 27: a semidiurnal tide position (period 12 h 25 min), no tide height.
+  [TIDE_TIMES.id, hours(-12, 48).map((h) => ({ ...row(TIDE_TIMES.id, h), tide_level_ft: null,
+    tide_norm: Math.round((0.5 + 0.5 * Math.cos((2 * Math.PI * h) / 12.4167)) * 1000) / 1000 }))],
   // 20: a rated spot (the fixture's 3 stars) and a FLAT one; the two no-data spots have no rows.
   [RATED_OR.id, hours(-12, 48).map((h) => row(RATED_OR.id, h))],
   [FLAT_OR.id, hours(-12, 48).map((h) => ({ ...row(FLAT_OR.id, h), stars: 0 }))],
@@ -978,6 +989,21 @@ async function main(): Promise<void> {
     const nf2 = await fetch(`${site}/no-such-page-anywhere`);
     eq('a path that matches no route answers 404', nf2.status, 404);
     check('...with the same page and search', (await nf2.text()).includes('data-404-search'));
+  }
+
+  // 27: the tide's times where its height is withheld (lib/tideTiming.ts).
+  {
+    const html = (await load(TIDE_TIMES.slug)).html.replace(/<!-- -->/g, '');
+    check(`${TIDE_TIMES.slug}: the chart is titled for tide times`, html.includes('Tide times · next 48h') && !html.includes('Tide (ft) · next 48h'));
+    check('...says which station, how far, and why there are no feet', html.includes(
+      'Tide times from NOAA&#x27;s Arena Cove station, 51 km away. Close enough for when high and low tide come; too far to give this spot&#x27;s tide height, so heights aren&#x27;t shown.'));
+    check('...and no longer says there is no tide data', !html.includes('No tide data for this spot.'));
+    const tile = html.slice(html.indexOf('>Tide<'), html.indexOf('>Tide<') + 1500);
+    check('the Tide tile says rising or falling, with no feet', /(Rising|Falling|Slack)/.test(tile) && tile.includes('height not shown')
+      && !/\d ft/.test(tile), tile.slice(0, 400));
+    const plain = (await load(WITH_ROW.slug)).html.replace(/<!-- -->/g, '');
+    check('a spot with its tide height keeps the feet chart and tile', plain.includes('Tide (ft) · next 48h') && plain.includes('2.5 ft')
+      && !plain.includes('data-tide-timing-caption'));
   }
 
   // 11: the Nearest buoy box (lib/buoyDisplay).

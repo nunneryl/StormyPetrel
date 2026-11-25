@@ -78,6 +78,7 @@ WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
         "nearest_buoy_id", "nearest_buoy_dist_km",
         "nearest_tide_station_id", "nearest_tide_station_dist_km",
         "nwps_wfo", "time_zone", "fallback_buoy_ids", "swell_window_source",
+        "tide_height_suppressed",
         "review_status", "description", "description_signature",
     ),
     "forecasts": (
@@ -290,6 +291,10 @@ def _spot_record(spot: dict, tide_freshness: dict | None = None) -> dict:
     # every spot still lives in data_sources.swell_window_source above.
     _sws = spot.get("swell_window_source")
     rec["swell_window_source"] = _sws if _sws and _sws != "orientation_derived" else None
+    # The tide's timing but not its height (migration 034): written true or false on every spot,
+    # never left to the preserve merge, so a spot whose flag is dropped from the roster reads
+    # false at the next import. The roster carries the key only where it is true (enrich).
+    rec["tide_height_suppressed"] = bool(spot.get("tide_height_suppressed"))
     return rec
 
 

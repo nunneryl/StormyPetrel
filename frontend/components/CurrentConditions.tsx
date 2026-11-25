@@ -33,6 +33,7 @@ import {
 import { shownTrain } from '@/lib/shownPeriod';
 import { absentHourNote } from '@/lib/currentHour';
 import { sharePercent, windSeaShare } from '@/lib/swellBreakdown';
+import { timingTrend } from '@/lib/tideTiming';
 
 type Tile = {
   label: string;
@@ -50,7 +51,11 @@ export function CurrentConditions({
   offshoreDeg,
   windowArcs,
   facingDeg,
+  tideTimingOnly = false,
 }: {
+  /** The tide's timing but not its height is known here (lib/tideTiming.ts): the Tide tile says
+   *  rising or falling, with no feet. */
+  tideTimingOnly?: boolean;
   offshoreDeg: number | null | undefined;
   /** The spot's swell window, which the shown train reads (lib/shownPeriod.ts). */
   windowArcs: Spot['swell_window_arcs'];
@@ -84,8 +89,9 @@ export function CurrentConditions({
     offshoreDeg ?? null,
   );
 
-  // Tide trend over the next 1 hour for the inline arrow indicator.
-  const tideTrend = (() => {
+  // Tide trend over the next 1 hour for the inline arrow indicator. Where only the tide's timing
+  // is known, it is read off the tide's position instead of its height.
+  const tideTrend = tideTimingOnly ? timingTrend(current?.tide_norm, forecasts[1]?.tide_norm) : (() => {
     const a = current?.tide_level_ft;
     const b = forecasts[1]?.tide_level_ft;
     if (a === null || a === undefined || b === null || b === undefined) return null;
@@ -146,11 +152,13 @@ export function CurrentConditions({
       <BigTile
         label="Tide"
         value={
-          current?.tide_level_ft !== null && current?.tide_level_ft !== undefined
-            ? `${current.tide_level_ft.toFixed(1)} ft`
-            : '—'
+          tideTimingOnly
+            ? (tideTrend ? `${tideTrend[0].toUpperCase()}${tideTrend.slice(1)}` : '—')
+            : current?.tide_level_ft !== null && current?.tide_level_ft !== undefined
+              ? `${current.tide_level_ft.toFixed(1)} ft`
+              : '—'
         }
-        hint={tideTrend ?? null}
+        hint={tideTimingOnly ? (tideTrend ? 'height not shown' : null) : tideTrend ?? null}
         icon={
           tideTrend === 'rising' ? (
             <span className="text-cyan-400 text-xl leading-none">↑</span>
