@@ -43,6 +43,13 @@ export type Spot = {
    *  to one of them (lib/buoyDisplay). Absent on a row read before that column existed. */
   fallback_buoy_ids?: string[] | null;
   nearest_tide_station_id: string | null;
+  /** Great-circle km from the spot to its tide station; the timing-only caption reads it. */
+  nearest_tide_station_dist_km?: number | null;
+  /** True where the station is trusted for the tide's TIMING but too far to give its HEIGHT
+   *  (migration 034; the four Mendocino spots on Arena Cove today). Those spots' forecast rows
+   *  carry tide_norm but no tide_level_ft, and the page shows the tide's times, not feet
+   *  (lib/tideTiming.ts). Absent on a row read before the column existed: read as false. */
+  tide_height_suppressed?: boolean | null;
   /** 2-3 sentence factual blurb seeded by generate_descriptions and
    *  edited manually thereafter. Null until generation runs. */
   description: string | null;
@@ -105,6 +112,10 @@ export type Forecast = {
   effective_size_ft: number | null;
   stars: number | null;
   tide_level_ft: number | null;
+  /** Where the tide is in the station's predicted range at this hour, 0 (lowest) to 1 (highest),
+   *  over the station's prediction window. Its highs and lows fall at the tide's high and low
+   *  times; the page reads it only for a spot whose tide height is withheld (lib/tideTiming.ts). */
+  tide_norm?: number | null;
   /** The NWPS cycle this hour was read from (migration 019), as PostgREST returns a timestamptz;
    *  null on an hour no NWPS cycle supplied. lib/modelRunAge reads it for the "Wave model run is
    *  N h old" note; nothing rated reads it. */

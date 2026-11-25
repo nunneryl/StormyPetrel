@@ -31,6 +31,7 @@ import { FORECAST_UPDATES } from '@/lib/updateCadence';
 import { siteUrl } from '@/lib/site-url';
 import { spotReportHref } from '@/lib/contact';
 import { CDIP_HOMEPAGE, showsCdipCredit } from '@/lib/cdipCredit';
+import { tideTimingOnly, timingOnlyCaption } from '@/lib/tideTiming';
 
 export const revalidate = 3600;
 
@@ -106,7 +107,7 @@ async function loadForecasts(spotId: number): Promise<Forecast[]> {
   const { data, error } = await supabaseUncached
     .from('forecasts')
     .select(
-      'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, face_ft_raw, face_correction_version, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft, nwps_cycle',
+      'spot_id, valid_time, source, hs, swell_hs, tp, dp, swell_tp, swell_dp, swell_1_hs, swell_1_tp, swell_1_dp, swell_2_hs, swell_2_tp, swell_2_dp, swell_3_hs, swell_3_tp, swell_3_dp, wind_wave_hs, wind_wave_tp, wind_wave_dp, swell_source, wind_speed, wind_dir, face_ft, face_ft_raw, face_correction_version, dir_gain, wind_mult, tide_mult, chop_ratio, chop_mult, period_quality, effective_size_ft, stars, tide_level_ft, tide_norm, nwps_cycle',
     )
     .eq('spot_id', spotId)
     .eq('source', 'nwps')
@@ -194,6 +195,8 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
   if (!spot) notFound();
   // Every time on the page is the spot's local time (lib/spotTime.ts).
   const timeZone = spotTimeZone(spot);
+  // The tide's timing but not its height (spots.tide_height_suppressed, lib/tideTiming.ts).
+  const timingOnly = tideTimingOnly(spot);
 
   const [forecasts, buoy, lastWave, cams] = await Promise.all([
     loadForecasts(spot.id),
@@ -350,6 +353,7 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
           <CurrentHourProvider rows={forecasts} serverNowMs={nowMs}>
             <SurfReportProvider slug={spot.slug} timeZone={timeZone}>
               <CurrentConditions
+                tideTimingOnly={timingOnly}
                 offshoreDeg={spot.offshore_wind_deg}
                 windowArcs={spot.swell_window_arcs}
                 facingDeg={spot.orientation_deg}
@@ -380,8 +384,16 @@ export default async function SpotPage({ params }: { params: Promise<Params> }) 
         <ChartCard title="Wind speed (mph) · next 48h">
           <WindChart forecasts={chartForecasts} offshoreDeg={spot.offshore_wind_deg} timeZone={timeZone} />
         </ChartCard>
-        <ChartCard title="Tide (ft) · next 48h">
-          <TideChart forecasts={chartForecasts} timeZone={timeZone} />
+        {/* Where the station gives the tide's timing but not its height (lib/tideTiming.ts), the
+            chart shows the high and low times, no feet, and says why. */}
+        <ChartCard title={timingOnly ? 'Tide times · next 48h' : 'Tide (ft) · next 48h'}>
+          <TideChart
+            forecasts={chartForecasts}
+            timeZone={timeZone}
+            timingOnlyCaption={timingOnly
+              ? timingOnlyCaption(spot.nearest_tide_station_id, spot.nearest_tide_station_dist_km)
+              : undefined}
+          />
         </ChartCard>
       </section>
 

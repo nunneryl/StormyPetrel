@@ -59,7 +59,7 @@ WRITTEN = {
         "crowd_factor", "hazards", "nearest_buoy_id",
         "nearest_buoy_dist_km", "nearest_tide_station_id",
         "nearest_tide_station_dist_km", "nwps_wfo", "time_zone", "fallback_buoy_ids",
-        "swell_window_source",
+        "swell_window_source", "tide_height_suppressed",
         "review_status", "description", "description_signature",
     ],
     "forecasts": [
