@@ -7,8 +7,7 @@ import { SiteNav } from '@/components/SiteNav';
 import { SpotSearchListProvider, type SpotSearchItem } from '@/components/SpotSearchList';
 import { SiteFooter } from '@/components/SiteFooter';
 import { fetchAllSpots } from '@/lib/queries';
-
-const GA_ID = 'G-S7Y5BXQ125';
+import { analyticsEnabled, GA_ID } from '@/lib/analytics';
 
 const SITE_URL = siteUrl();
 
@@ -87,20 +86,25 @@ export default async function RootLayout({
           <SiteFooter />
         </SpotSearchListProvider>
 
-        {/* Google Analytics (gtag.js). afterInteractive defers injection
-            until hydration finishes so it never blocks first paint. */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_ID}');
-          `}
-        </Script>
+        {/* Google Analytics (gtag.js), on the production site only (lib/analytics.ts): previews,
+            local builds and CI render no tag. afterInteractive defers injection until hydration
+            finishes so it never blocks first paint. */}
+        {analyticsEnabled() && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

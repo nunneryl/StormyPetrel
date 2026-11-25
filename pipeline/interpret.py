@@ -1529,6 +1529,9 @@ def rate_spot(
     offshore = spot.get("offshore_wind_deg")
     arcs = spot.get("swell_window_arcs") or []
     optimal = spot.get("optimal_swell_dir")
+    # What directional_gain rates a swell against. With none of the three it returns 0.0 for
+    # every direction, which says nothing about the surf: such a spot's hours are unrated.
+    has_direction_reference = bool(arcs) or optimal is not None or orientation is not None
     # Only a verified preference moves the rating (rated_tide_preference); an unverified one
     # is no preference, and tide_mult is 1.0 on every hour.
     preference = rated_tide_preference(spot)
@@ -1691,11 +1694,16 @@ def rate_spot(
             effective = fft or 0.0
         else:
             effective = (fft or 0.0) * dg
+        # EMPTY, NOT 0.0, WHEN THE HOUR CANNOT BE RATED. 0.0 is a rating ("flat"), and the site
+        # shows it as FLAT; an hour with no surf height (no WW3 partition in the window and no
+        # NWPS height, e.g. a sample cell left blank for hours at low tide) or a spot with
+        # nothing to rate direction against (no window, no optimal, no orientation) is not
+        # flat, it is unknown, and the site shows empty stars as "No data" (#357).
         stars = (
             composite_stars(effective, wm, tm, cm, pq,
                             **rule_keywords(spot, wdir, wspd, size_tp, effective, face_factor,
                                             median_factor))
-            if fft is not None else 0.0
+            if fft is not None and has_direction_reference else None
         )
 
         # Resolved swell direction / period — what the rater actually used.
@@ -1908,11 +1916,18 @@ def face_factors_by_name(spots: list[dict], factors: dict) -> dict[str, float | 
     return {s["name"]: spot_factor(s, factors, _slug_for) for s in spots if s.get("name")}
 
 
+def _fmt_stars(stars) -> str:
+    """A star value for a log line: one decimal, or "—" for an unrated hour."""
+    return "—" if stars is None else f"{stars:.1f}"
+
+
 def _star_histogram(ratings: dict[str, list[dict]]) -> Counter:
+    """Spot-hours by star value; the hours rate_spot could not rate (stars None) are counted
+    under None, apart from the 0.0 ("flat") hours."""
     c: Counter = Counter()
     for series in ratings.values():
         for entry in series:
-            c[entry.get("stars", 0.0)] += 1
+            c[entry.get("stars")] += 1
     return c
 
 
@@ -1922,8 +1937,9 @@ def _zero_star_breakdown(
 ) -> tuple[int, int, int]:
     """Split 0-star spot-hours into three buckets:
 
-    - null_orientation: spot has orientation_deg == None → dir_gain is
-      always 0 by design, so every hour is 0 stars regardless of swell.
+    - null_orientation: spot has orientation_deg == None but is rated against its arcs or
+      optimal direction. (With none of the three its hours are unrated, stars None, and are
+      not counted here: see rate_spot.)
     - null_arcs: orientation resolved but no arcs (shouldn't happen
       post-fallback, but counted for completeness).
     - flat_conditions: orientation AND arcs resolved — the hour is 0 star
@@ -1941,7 +1957,7 @@ def _zero_star_breakdown(
         has_orient = spot.get("orientation_deg") is not None
         has_arcs = bool(spot.get("swell_window_arcs"))
         for entry in series:
-            if entry.get("stars", 0.0) != 0.0:
+            if entry.get("stars") != 0.0:   # unrated hours (None) are not 0-star hours
                 continue
             if not has_orient:
                 null_orient += 1
@@ -1971,9 +1987,11 @@ def _print_summary(
 
     hist = _star_histogram(ratings)
     print("  star distribution (spot-hours):")
-    for stars in sorted(hist.keys()):
+    for stars in sorted(k for k in hist if k is not None):
         bar = "█" * min(50, int(hist[stars] / max(1, total_hours) * 200))
         print(f"    {stars:>3.1f} stars: {hist[stars]:>6d}  {bar}")
+    if hist.get(None):
+        print(f"    unrated (no height or no direction reference): {hist[None]:>6d}")
 
     zero_hours = hist.get(0.0, 0)
     if zero_hours:
@@ -1986,7 +2004,7 @@ def _print_summary(
 
     peaks = sorted(
         (
-            (name, max(e.get("stars", 0.0) for e in series), series)
+            (name, max((e.get("stars") or 0.0) for e in series), series)
             for name, series in ratings.items()
             if series
         ),
@@ -2021,7 +2039,7 @@ def _print_summary(
                 f"{entry.get('dir_gain', 0):>6.2f}"
                 f"{entry.get('wind_mult', 0):>6.2f}"
                 f"{entry.get('tide_mult', 0):>6.2f}"
-                f"{entry.get('stars', 0):>5.1f}"
+                f"{_fmt_stars(entry.get('stars')):>5}"
             )
     print("=" * 60)
 

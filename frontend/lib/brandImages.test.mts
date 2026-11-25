@@ -43,12 +43,12 @@ check('homepage logo under 120 KB', home.bytes < 120_000, String(home.bytes));
 
 // 2. Where they are used: through the optimizer, with the shown size as width/height.
 const navSrc = read('components/SiteNav.tsx');
-const homeSrc = read('app/page.tsx');
+const homeSrc = read('app/(home)/page.tsx');
 check('the nav uses the 2x monogram', navSrc.includes('src="/brand/sp-initials-nav.png"'));
 check('...at 26x32, its shown size (53x64 halved)', /width=\{26\}\s+height=\{32\}/.test(navSrc));
 check('the homepage uses the 2x logo', homeSrc.includes('src="/brand/logo-home.png"'));
 check('...at 139x120, its desktop size (279x240 halved)', /width=\{139\}\s+height=\{120\}/.test(homeSrc));
-for (const [label, src] of [['components/SiteNav.tsx', navSrc], ['app/page.tsx', homeSrc]] as const) {
+for (const [label, src] of [['components/SiteNav.tsx', navSrc], ['app/(home)/page.tsx', homeSrc]] as const) {
   check(`${label}: no image skips the optimizer`, !/\bunoptimized\b/.test(src));
   check(`${label}: the full-size artwork is not loaded`,
     !src.includes('"/logo.png"') && !src.includes('"/brand/sp-initials.png"'));

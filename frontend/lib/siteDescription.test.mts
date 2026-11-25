@@ -108,7 +108,7 @@ check('no copy states a spot count except through RATED_SPOT_COUNT',
 // --------------------------------------------------------------------------- //
 const READERS: [string, number][] = [
   ['app/layout.tsx', 3],                 // description, Open Graph, Twitter
-  ['app/page.tsx', 2],                   // title, Open Graph title
+  ['app/(home)/page.tsx', 2],                   // title, Open Graph title
   ['app/map/page.tsx', 4],               // title, description, Open Graph title and description
   ['app/opengraph-image.tsx', 1],        // the share image
   ['components/HeroSearch.tsx', 1],      // the home page search box
@@ -121,7 +121,7 @@ for (const [file, n] of READERS) {
 const NOAA = ['NWPS', 'WAVEWATCH III', 'HRRR', 'NDBC', 'CO-OPS'];
 check(`NOAA_SOURCES names every NOAA feed the footer credits: ${NOAA.join(', ')}`,
   NOAA.every((n) => NOAA_SOURCES.includes(n)), NOAA_SOURCES);
-for (const [file, n] of [['app/layout.tsx', 1], ['app/page.tsx', 2]] as [string, number][]) {
+for (const [file, n] of [['app/layout.tsx', 1], ['app/(home)/page.tsx', 2]] as [string, number][]) {
   const got = references(FRONTEND, file, 'NOAA_SOURCES');
   check(`${file} lists the feeds through NOAA_SOURCES (${n}+)`, got >= n, `${got}`);
 }

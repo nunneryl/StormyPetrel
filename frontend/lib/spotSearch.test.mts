@@ -135,7 +135,7 @@ for (const f of ['components/HeroSearch.tsx', 'components/NavSearch.tsx', 'compo
     check(`${f} says "No spots found" when nothing matches`, src.includes('{NO_RESULTS_TEXT}') && src.includes('results.length === 0'));
   }
   check('HeroSearch takes ratings, not a list', /export function HeroSearch\(\{ ratings \}: \{ ratings: HeroRatings \}\)/.test(read('components/HeroSearch.tsx')));
-  const home = read('app/page.tsx');
+  const home = read('app/(home)/page.tsx');
   check('the homepage passes ratings only', home.includes('<HeroSearch ratings={ratings} />') && !home.includes('searchItems'));
   const nav = read('components/SiteNav.tsx');
   check('the mobile header has a search button that opens the search panel', nav.includes('data-mobile-search-button')

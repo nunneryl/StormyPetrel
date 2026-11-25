@@ -158,7 +158,7 @@ const SITES: [string, string][] = [
   // /map and /region/* get the shown train worked out on the server, in their slim list items.
   ['lib/listSpot.ts', 'const { tp, dp } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);'],
   ['components/SpotCard.tsx', '{fmtSec(shownTrain(f, spot.swell_window_arcs, spot.orientation_deg).tp)}'],
-  ['app/page.tsx', 'const { tp } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);'],
+  ['app/(home)/page.tsx', 'const { tp } = shownTrain(f, s.swell_window_arcs, s.orientation_deg);'],
 ];
 for (const [rel, use] of SITES) check(`${rel} shows the period through shownTrain`, read(rel).includes(use));
 // ...and the two components that show those items take them from there, and work out no train of
