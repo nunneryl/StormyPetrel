@@ -40,7 +40,7 @@
  *      not-found page says "Page not found" with a spot search.
  *  26. Pre-launch: this non-production build renders no analytics tag, and /map's Leaflet and
  *      marker-cluster styles are the site's own stylesheets, nothing from unpkg.
- *  25. A real 404 for a missing spot, and a page for a new one. /spot/<no such slug> answers 404
+ *  25. A real 404 for a missing spot or region, and a page for a new spot. /spot/<no such slug> answers 404
  *      with the not-found page and its search in the HTML (no loading boundary streams the status
  *      out first: app/spot/[slug] has no loading.tsx, and the homepage's skeleton is scoped to
  *      the (home) route group). A spot added after the build (in no list the build read) answers
@@ -975,6 +975,12 @@ async function main(): Promise<void> {
       cssHrefs.join(' '));
     check('...which carry Leaflet\'s and the marker clusters\' styles', css.includes('.leaflet-container')
       && css.includes('.marker-cluster-small'));
+    // 25: a missing region is a real 404 too; a region with spots still answers 200.
+    const nr = await fetch(`${site}/region/no-such-region-anywhere`);
+    const nrHtml = await nr.text();
+    eq('a missing region answers 404', nr.status, 404);
+    check('...with "Page not found" and a spot search', nrHtml.includes('Page not found') && nrHtml.includes('data-404-search'));
+    eq('a region with spots answers 200', (await fetch(`${site}/region/california`)).status, 200);
     const nf2 = await fetch(`${site}/no-such-page-anywhere`);
     eq('a path that matches no route answers 404', nf2.status, 404);
     check('...with the same page and search', (await nf2.text()).includes('data-404-search'));

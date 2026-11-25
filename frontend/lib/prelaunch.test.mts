@@ -31,10 +31,10 @@ function loadings(dir: string): string[] {
   });
 }
 const all = loadings(join(FRONTEND, 'app'));
-// /region/[state] keeps its skeleton (and so a missing region still answers a noindexed 200):
-// not part of this change, listed apart in the PR.
-check('no loading.tsx wraps /spot: only the homepage\'s and the region page\'s remain',
-  all.sort().join(',') === 'app/(home)/loading.tsx,app/region/[state]/loading.tsx', all.join(', '));
+check('the only loading.tsx left is the homepage\'s (none wraps /spot or /region)',
+  all.length === 1 && all[0] === 'app/(home)/loading.tsx', all.join(', '));
+check('a new region still renders on first visit (no dynamicParams = false)',
+  !/dynamicParams\s*=\s*false/.test(read('app/region/[state]/page.tsx')));
 check('a new spot still renders on first visit (no dynamicParams = false)',
   !/dynamicParams\s*=\s*false/.test(read('app/spot/[slug]/page.tsx')));
 
