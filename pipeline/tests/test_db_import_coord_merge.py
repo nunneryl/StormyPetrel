@@ -10,6 +10,8 @@ Run: python -m pipeline.tests.test_db_import_coord_merge   (or pytest)
 """
 from __future__ import annotations
 
+import pytest
+
 import json
 import tempfile
 from pathlib import Path
@@ -95,23 +97,30 @@ def test_unmoved_spot_still_preserves_absent_fields():
 # --------------------------------------------------------------------------- #
 # Descriptions under signature v2 (pipeline/descriptions.py)                   #
 # --------------------------------------------------------------------------- #
-# Steamer Lane as the roster gives it. Its payload, written out by hand (no swell window, which is
-# never sent; tide stated because its source is researched):
-#   {"bottom":"rock","break_type":"point","faces":"SE","name":"Steamer Lane","offshore_wind_deg":308,
-#    "offshore_wind_from":"NW","optimal_swell_deg":225,"optimal_swell_from":"SW","orientation_deg":128,
-#    "state":"California","tide_preference":"all"}
-# and its signature, 'v2:' + sha1("t3\n" + that)[:16], computed with hashlib directly:
+# Steamer Lane as the roster gives it. Its payload under template t4, with no facts from beyond its
+# own row (the fixture below empties the Context; tide stated because its source is researched):
+#   {"bottom":"rock","break_type":"point","name":"Steamer Lane","state":"California",
+#    "tide_preference":"all"}
+# and its signature, 'v2:' + sha1("t4\n" + that)[:16], computed with hashlib directly:
 STEAMER = {"name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266, "region_hint": "California",
            "orientation_deg": 128, "offshore_wind_deg": 308, "optimal_swell_dir": 225,
            "swell_window_arcs": [{"min": 180, "max": 315}], "tide_preference": "all",
            "tide_preference_source": "researched",
            "break_type": "point", "break_type_source": "researched",
            "bottom": "rock", "bottom_source": "researched", "is_valid_surf_spot": True}
-STEAMER_V2 = "v2:79fe0d46fcf5a56a"
+STEAMER_V2 = "v2:e3cfaeb7005c1559"
 STEAMER_ROW = {"slug": "steamer-lane", "name": "Steamer Lane", "lat": 36.9513, "lng": -122.0266,
                "state": "California", "orientation_deg": 128,
                "description": "Steamer Lane is a point break over rock.",
                "description_signature": STEAMER_V2}
+
+
+@pytest.fixture(autouse=True)
+def _no_outside_facts(monkeypatch):
+    """The description payload from the spot's own row only (tests/test_descriptions_v2.py covers
+    the Context of other spots, best months, cams and station names)."""
+    from pipeline import descriptions
+    monkeypatch.setattr(descriptions, "default_context", lambda: descriptions.Context([]))
 
 
 def test_a_matching_v2_signature_keeps_the_description_and_its_signature():
@@ -143,7 +152,7 @@ def test_the_payload_is_read_from_the_roster_before_the_database_fills_it():
     the database's tide would differ from the stored one; only the roster's view matches."""
     no_tide = {k: v for k, v in STEAMER.items()
                if k not in ("tide_preference", "tide_preference_source")}
-    stored = "v2:0a24c7ec59ff4577"   # the payload above without "tide_preference":"all", by hashlib
+    stored = "v2:70a54ab2e6a87ed3"   # the payload above without "tide_preference":"all", by hashlib
     row = dict(STEAMER_ROW, description_signature=stored, tide_preference="low",
                tide_preference_source="researched")
     up = _run_import([row], [no_tide])["steamer-lane"]
@@ -181,7 +190,7 @@ def test_an_already_blank_description_is_not_counted_again():
     # the reef payload, signed with hashlib: break_type "reef" in place of "point"
     assert db_import.description_blank_reason(
         db_import._spot_record(dict(STEAMER, break_type="reef")), STEAMER_ROW) == (
-        "signature v2:79fe0d46fcf5a56a != v2:10c5e2d316a2d44d")
+        "signature v2:e3cfaeb7005c1559 != v2:4308cdd30847fe59")
 
 
 def test_fallback_buoy_ids_maps_from_source_defaulting_to_empty():

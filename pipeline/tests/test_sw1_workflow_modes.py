@@ -28,7 +28,7 @@ def test_nwps_shelter_is_a_mode():
     assert re.findall(r"- ([a-z-]+)", options) == [
         "validate", "full", "star-preview", "tide-preview", "nwps-shelter", "rating-preview",
         "data-quality", "node-preview", "surf-preview", "period-preview", "nwps-cells",
-        "tide-station", "buoy-assign", "nwps-blank"]
+        "tide-station", "buoy-assign", "nwps-blank", "best-months"]
 
 
 def test_only_the_measurement_job_runs_for_nwps_shelter():
@@ -36,7 +36,7 @@ def test_only_the_measurement_job_runs_for_nwps_shelter():
     assert set(jobs) == {"raycast", "star-preview", "tide-preview", "nwps-shelter",
                          "rating-preview", "data-quality", "node-preview", "surf-preview",
                          "period-preview", "nwps-cells", "tide-station", "buoy-assign",
-                         "nwps-blank"}
+                         "nwps-blank", "best-months"}
     assert _if(jobs["nwps-shelter"]) == "${{ inputs.mode == 'nwps-shelter' }}"
     assert _if(jobs["raycast"]) == (
         "${{ inputs.mode != 'star-preview' && inputs.mode != 'tide-preview' "
@@ -44,7 +44,8 @@ def test_only_the_measurement_job_runs_for_nwps_shelter():
         "&& inputs.mode != 'data-quality' && inputs.mode != 'node-preview' "
         "&& inputs.mode != 'surf-preview' && inputs.mode != 'period-preview' "
         "&& inputs.mode != 'nwps-cells' && inputs.mode != 'tide-station' "
-        "&& inputs.mode != 'buoy-assign' && inputs.mode != 'nwps-blank' }}")
+        "&& inputs.mode != 'buoy-assign' && inputs.mode != 'nwps-blank' "
+        "&& inputs.mode != 'best-months' }}")
     assert _if(jobs["star-preview"]) == "${{ inputs.mode == 'star-preview' }}"
     assert _if(jobs["tide-preview"]) == "${{ inputs.mode == 'tide-preview' }}"
     assert _if(jobs["rating-preview"]) == "${{ inputs.mode == 'rating-preview' }}"

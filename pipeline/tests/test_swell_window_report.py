@@ -58,6 +58,9 @@ def test_a_description_is_stale_when_its_v2_signature_no_longer_matches():
     old = _spot()
     cache = {"test-spot": {"signature": description_signature(description_payload(spot_fields(old)))}}
     assert R.stale_descriptions([old], cache) == []
-    assert R.stale_descriptions([_spot(optimal=250)], cache) == ["test-spot"]
+    # since template t4 the optimal direction is the Optimal conditions card's, not the description's
+    assert R.stale_descriptions([_spot(optimal=250)], cache) == []
+    changed = _spot(break_type="reef", break_type_source="researched")
+    assert R.stale_descriptions([changed], cache) == ["test-spot"]
     # a version-1 signature is never blanked by db_import, so it is not counted
     assert R.stale_descriptions([_spot(optimal=250)], {"test-spot": {"signature": "abc"}}) == []
